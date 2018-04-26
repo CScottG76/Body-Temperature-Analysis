@@ -1,0 +1,1024 @@
+{
+ "cells": [
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "# What is the True Normal Human Body Temperature? \n",
+    "\n",
+    "#### Background\n",
+    "\n",
+    "The mean normal body temperature was held to be 37$^{\\circ}$C or 98.6$^{\\circ}$F for more than 120 years since it was first conceptualized and reported by Carl Wunderlich in a famous 1868 book. But, is this value statistically correct?"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "<h3>Exercises</h3>\n",
+    "\n",
+    "<p>In this exercise, you will analyze a dataset of human body temperatures and employ the concepts of hypothesis testing, confidence intervals, and statistical significance.</p>\n",
+    "\n",
+    "<p>Answer the following questions <b>in this notebook below and submit to your Github account</b>.</p> \n",
+    "\n",
+    "<ol>\n",
+    "<li>  Is the distribution of body temperatures normal? \n",
+    "    <ul>\n",
+    "    <li> Although this is not a requirement for CLT to hold (read CLT carefully), it gives us some peace of mind that the population may also be normally distributed if we assume that this sample is representative of the population.\n",
+    "    </ul>\n",
+    "<li>  Is the sample size large? Are the observations independent?\n",
+    "    <ul>\n",
+    "    <li> Remember that this is a condition for the CLT, and hence the statistical tests we are using, to apply.\n",
+    "    </ul>\n",
+    "<li>  Is the true population mean really 98.6 degrees F?\n",
+    "    <ul>\n",
+    "    <li> Would you use a one-sample or two-sample test? Why?\n",
+    "    <li> In this situation, is it appropriate to use the $t$ or $z$ statistic? \n",
+    "    <li> Now try using the other test. How is the result be different? Why?\n",
+    "    </ul>\n",
+    "<li>  Draw a small sample of size 10 from the data and repeat both tests. \n",
+    "    <ul>\n",
+    "    <li> Which one is the correct one to use? \n",
+    "    <li> What do you notice? What does this tell you about the difference in application of the $t$ and $z$ statistic?\n",
+    "    </ul>\n",
+    "<li>  At what temperature should we consider someone's temperature to be \"abnormal\"?\n",
+    "    <ul>\n",
+    "    <li> Start by computing the margin of error and confidence interval.\n",
+    "    </ul>\n",
+    "<li>  Is there a significant difference between males and females in normal temperature?\n",
+    "    <ul>\n",
+    "    <li> What test did you use and why?\n",
+    "    <li> Write a story with your conclusion in the context of the original problem.\n",
+    "    </ul>\n",
+    "</ol>\n",
+    "\n",
+    "You can include written notes in notebook cells using Markdown: \n",
+    "   - In the control panel at the top, choose Cell > Cell Type > Markdown\n",
+    "   - Markdown syntax: http://nestacms.com/docs/creating-content/markdown-cheat-sheet\n",
+    "\n",
+    "#### Resources\n",
+    "\n",
+    "+ Information and data sources: http://www.amstat.org/publications/jse/datasets/normtemp.txt, http://www.amstat.org/publications/jse/jse_data_archive.htm\n",
+    "+ Markdown syntax: http://nestacms.com/docs/creating-content/markdown-cheat-sheet\n",
+    "\n",
+    "****"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 1,
+   "metadata": {
+    "collapsed": true
+   },
+   "outputs": [],
+   "source": [
+    "# Import libraries\n",
+    "import pandas as pd\n",
+    "import numpy as np\n",
+    "import matplotlib.pyplot as plt\n",
+    "import seaborn as sns\n",
+    "\n",
+    "sns.set()\n",
+    "\n",
+    "df = pd.read_csv('data/human_body_temperature.csv')\n",
+    "\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 2,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/html": [
+       "<div>\n",
+       "<style>\n",
+       "    .dataframe thead tr:only-child th {\n",
+       "        text-align: right;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe thead th {\n",
+       "        text-align: left;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe tbody tr th {\n",
+       "        vertical-align: top;\n",
+       "    }\n",
+       "</style>\n",
+       "<table border=\"1\" class=\"dataframe\">\n",
+       "  <thead>\n",
+       "    <tr style=\"text-align: right;\">\n",
+       "      <th></th>\n",
+       "      <th>temperature</th>\n",
+       "      <th>gender</th>\n",
+       "      <th>heart_rate</th>\n",
+       "    </tr>\n",
+       "  </thead>\n",
+       "  <tbody>\n",
+       "    <tr>\n",
+       "      <th>0</th>\n",
+       "      <td>99.3</td>\n",
+       "      <td>F</td>\n",
+       "      <td>68.0</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>1</th>\n",
+       "      <td>98.4</td>\n",
+       "      <td>F</td>\n",
+       "      <td>81.0</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>2</th>\n",
+       "      <td>97.8</td>\n",
+       "      <td>M</td>\n",
+       "      <td>73.0</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>3</th>\n",
+       "      <td>99.2</td>\n",
+       "      <td>F</td>\n",
+       "      <td>66.0</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>4</th>\n",
+       "      <td>98.0</td>\n",
+       "      <td>F</td>\n",
+       "      <td>73.0</td>\n",
+       "    </tr>\n",
+       "  </tbody>\n",
+       "</table>\n",
+       "</div>"
+      ],
+      "text/plain": [
+       "   temperature gender  heart_rate\n",
+       "0         99.3      F        68.0\n",
+       "1         98.4      F        81.0\n",
+       "2         97.8      M        73.0\n",
+       "3         99.2      F        66.0\n",
+       "4         98.0      F        73.0"
+      ]
+     },
+     "execution_count": 2,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "df.head()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 3,
+   "metadata": {
+    "collapsed": true
+   },
+   "outputs": [],
+   "source": [
+    "# Setting arrays for analysis:  full temperature set, men's temperatures, and women's temperatures\n",
+    "temps = np.asarray(df['temperature'])\n",
+    "mtemps = np.asarray(df.loc[df['gender']=='M','temperature'])\n",
+    "ftemps = np.asarray(df.loc[df['gender']=='F','temperature'])\n",
+    "\n",
+    "# Calculate summary statistics of temperature data\n",
+    "temps_mn = np.mean(temps)\n",
+    "temps_md = np.median(temps)\n",
+    "temps_sd = np.std(temps)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 4,
+   "metadata": {
+    "collapsed": true
+   },
+   "outputs": [],
+   "source": [
+    "# Define function for computer ECDF data returning x,y values\n",
+    "def ecdf(data):\n",
+    "    \"\"\"Compute ECDF for a one-dimensional array of measurements.\"\"\"\n",
+    "\n",
+    "    n = len(data)\n",
+    "    x = np.sort(data)\n",
+    "    y = np.arange(1, n+1) / n\n",
+    "    \n",
+    "    return x,y"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 5,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "image/png": "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\nAQghRDclCUAIIbopSQBCCNFNSQIQQohuShKAEEJ0UzIfQCMej4ff//735Ofn43A4ePDBB9E0jYce\neoiGhgYiIyN55plnSEhIMDrU09ZSWx944IHA8n379nH11Vfzn//5nwZGefpaauehQ4d4+umnsVgs\njB07lrvuusvoMDtES209ePAgTz/9NFFRUYwbN4477rjD6DBP25YtW3j66adZtmwZubm5zJ8/H03T\nGDhwIA899BAmk4klS5bw5ZdfYrFYuP/++9tdaLKrOJm2AuTm5vKb3/yGDz74oH0bUCJg2bJl6g9/\n+INSSqm9e/eqm2++Wc2ePVt99913SimlPv74Y/Xtt98aGWKHaamtR+Xl5amrr75aOZ1Oo8LrMC21\nc9q0aWrPnj1K13U1a9YstXPnToOj7BjN2/qLX/xCjR8/XuXl5SmllLrnnnvUpk2bjAzxtL344otq\nypQp6tprr1VKKXXbbbep9evXK6WUeuCBB9Snn36qtm/frmbPnq10XVcFBQXqmmuuMTLkU3YybVVK\nqXfeeUddffXV6oILLmj3NqQLqJEff/yRiy++GIAzzzyT77//nvLyclatWsXs2bPJyckJ2SOJ5pq3\nde/evYFljz76KPfeey92u92o8DpMS+0866yzqKyspKGhgfr6eszm8CjH3byt3377LbGxsfTt2xfw\n1+f69ttvjQzxtKWnp7N48eLA8++//55zzz0XgIsvvph169axefNmLrroIjRNo1evXvh8PsrLy40K\n+ZSdTFsB4uLi+Oc//3lK25AE0MhZZ53FqlWrUEqRk5NDRUUFe/bsYezYsfzjH/+gqqqKd955x+gw\nO0TzthYVFeHz+di5cycul4uxY8caHWKHaKmdAwcO5Ne//jVXXnklaWlpnHnmmUaH2SGat9Xj8eB2\nu9m7dy8+n4/Vq1dTW9tyVd1QcdlllwWqCoN/Eqej813b7XZqamqOK0V/9PVQczJtBcjOziY6OvqU\ntiEJoJEZM2bgcDi46aabWLVqFcOHD8dut3P++eejaRrZ2dlNJrYJZc3bOmzYMMxmM++99x7XXnut\n0eF1mObtTE9P56WXXuLDDz9k5cqVZGRk8PLLLxsdZodo6TN98sknefjhh5k7dy79+vULi+tXjR3t\nAwd/WfnY2NhTKjcfClpq62mv87TXEEa2bdvGqFGjWLZsGZdeeinp6emcccYZfPPNNwBs2rSJgQMH\nGhxlx2je1qPdBOvXrw/M5BYOmrdzwIABREdHB46YkpOTqa6uNjjKjtHSZ7p69WpeeOEFlixZQl5e\nHhdccIHRYXaooUOHsmHDBgBWr17N6NGjycrKYs2aNei6zqFDh9B1ncTE4M4b0hlaauvpklFAjWRk\nZPDnP/+Zl19+mZiYGB599FEqKir4r//6L3w+H3369An5UTFHtdRW8M/XHE5HiS21c+vWrdx8881Y\nrVZiYmJ4/PHHjQ6zQ7TU1q+++orrr78em83GVVddFTYHMEfNmzePBx54gGeeeYYzzzyTyy67DLPZ\nzOjRo5k5cya6rvPggw8aHWaHaKmtp0vKQQshRDclXUBCCNFNSQIQQohuShKAEEJ0U5IAhBCim5IE\nIIQQ3ZQkANHpNmzYwDnnnMO0adOYOnUqV1xxBa+++mq71nHw4EEmTJhw0u+fPXt2e8PsVFu3buWp\np54KyrqdTid33nknSinmz5/PJZdcwrRp0wI/zz77LC6Xizlz5uDz+YISg+ia5D4AYYjhw4ezbNky\nwL+Dmjx5MhdeeCEDBgwIyvY2btwYlPV2lB9//JGysrKgrPv555/nuuuuC5QRmDt3Ltdcc81x7xs7\ndiyvv/46N954Y1DiEF2PJABhuKMF2Y7erp+Tk8Ojjz5KfX09CQkJLFiwgIyMDH744Qf+3//7fwAM\nGTIE8CePiRMn8vnnn+NwODh48CC33norH330UWD9CxcuBODaa6/lzTffZPXq1Tz33HN4vV769OnD\nI488QkJCAhMmTGDy5MmsXbsWi8XCHXfcwcsvv0xubi7z5s3jyiuvZP78+VitVrZt24bL5eL2229n\n+vTpuFwuFixYwJ49e/D5fNxyyy1MmTKFt99+m3feeYfKykqys7OZMmUKjzzyCLW1tZSXl3Prrbcy\nefJknnvuOWpra1m6dCkpKSls3LgxcIPa7NmzmTNnDgBPPfUUuq4zcOBAHnzwwRa32ZjT6eSLL77g\n3nvvPeHnMGXKFK677jpuuOGGQLIQYe60a5YK0U7r169XmZmZaurUqWrKlClq5MiRat68eUrXdVVf\nX6+ys7PVli1blFJKffTRR4FyvlOmTFFr1qxRSim1ZMkSlZ2drZRS6r777lNvvvmmUkqpxYsXqxde\neOG4bQ4aNEgppVRZWZmaOnWqqqysVEop9dprr6n7779fKaVUdna2+vvf/66UUmr+/Pnq+uuvVw0N\nDWrDhg1q2rRpSiml5s2bp/7jP/5DeTweVVhYqMaOHauKi4vVU089pV599VWllFI1NTVq8uTJKi8v\nT61YsUJNmjRJNTQ0KKWUWrhwoVq3bp1Syl92OzMzUyml1IoVK9S8efOOe6yUUj/72c/U+vXr1fr1\n69WoUaNUdXW1Ukq1us3GPvvsMzV37tzA83nz5qnx48erqVOnBn5qamoCy6dPn6527Nhxoo9QhAk5\nAxCGaN4F9Ktf/YoXX3yR7OxsYmNjA2W3r7jiCh588EEKCgooLi7mwgsvBOCaa65hxYoVgL8I2uLF\ni/npT3/KBx980Ob1hC1btlBYWMhNN90EgK7rxMXFBZYfLafcq1cvkpOTsVgs9OrVq0m9oGuuuYaI\niAhSU1PJyspi8+bNrFu3DrfbHYiptraWPXv2AP4aLkerOs6fP5+vv/6aF154gd27d7e7Ome/fv0C\nZ0qtbfNoXSeAAwcOkJqa2mQdrXUBHW33gQMHAmdYIrxJAhCGczgcXHHFFaxbt47x48cft1wpRXR0\nNKpR1ZLGNfzHjBlDcXExn376KX369CElJaXVbfl8PrKysvjv//5vwN/91LhyZEREROBx41K8jTXe\ntq7rWCwWdF3nqaeeYtiwYQCUlpYSFxfH+++/j81mC7z/d7/7HbGxsWRnZ3PllVe2OIOTpmlN2trQ\n0BB43HhdrW2z+bpaa0drbWtcdVKEN/mkheF8Ph8bN25k6NChnHnmmVRWVrJ161YAPvroI3r16kVC\nQgK9evXiyy+/BGiy49Q0jenTp7Nw4cJWj2zNZjNer5ezzz6bnJwc9u/fD8Bf/vIXnnzyyXbF+69/\n/QulFAUFBWzdupVRo0Zx/vnn89prrwFQXFzM1KlTKSwsPO53165dy9y5c7n00ktZvXp1oP1H4wNI\nSEhg7969KKXIz89n165dLcZxMtvMyMigoKDgpNtWUFBAenr6Sb9fhDY5AxCG2L59O9OmTUPTNLxe\nL4MHD+aWW24hMjKSZ599lkceeYS6ujri4uJ49tlnAf8F0N///vf86U9/IjMzs8n6Jk+ezMsvv8yl\nl17a4vYmTpzItGnTePvtt1m0aBG/+93v0HWdlJSUdg+/dLvdzJgxA4/Hw4IFC0hISGDOnDk8/PDD\nTJkyBZ/Px7333kt6enqglPhRd955JzfccANWq5UhQ4bQu3dvDh48yMiRI1myZAlPP/00c+fOZcWK\nFVx++eX069ePUaNGtRhHa9tsbOzYsTz22GPoun7CI/vq6mqcTqd0/3QjUg1UhDxd13nttdfYv38/\nf/jDH4K6rfnz53Puuee2eqbRFT322GOcf/75ZGdnt/m+V199FYvFIsNAuxHpAhIhb86cObz11lvc\ncccdRofSJR39+7R1rOdyufj3v//NzJkzOzEyYTQ5AxBCiG5KzgCEEKKbkgQghBDdlCQAIYTopiQB\nCCFENyUJQAghuqn/Dy4CIbLWZrQ3AAAAAElFTkSuQmCC\n",
+      "text/plain": [
+       "<matplotlib.figure.Figure at 0x113656438>"
+      ]
+     },
+     "metadata": {},
+     "output_type": "display_data"
+    },
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "Mean =  98.2492307692\n",
+      "Median[data] =  98.3\n"
+     ]
+    }
+   ],
+   "source": [
+    "# Sample out a normal distribution of mean & standard deviation of data.\n",
+    "test_samp = np.random.normal(temps_mn, temps_sd, size=10000)\n",
+    "\n",
+    "# Assign normal distribution data to appropriate variables for plotting: x_test, y_test\n",
+    "x_test,y_test = ecdf(test_samp)\n",
+    "\n",
+    "# Assign body temperature data to appropriate variables for plotting: x, y\n",
+    "x,y = ecdf(temps)\n",
+    "\n",
+    "# Plot temperature CDF with overlay of normal distribution CDF.\n",
+    "_ = plt.plot(x_test, y_test)\n",
+    "_ = plt.plot(x, y, marker='.', linestyle='none')\n",
+    "_ = plt.xlabel('Body temperature (F)')\n",
+    "_ = plt.ylabel('CDF')\n",
+    "\n",
+    "# Plot reference lines\n",
+    "plt.axvline(x=temps_mn, color='red', linewidth = 0.25)\n",
+    "plt.axhline(y=0.5, color='red', linewidth = 0.25)\n",
+    "\n",
+    "plt.margins(0.02)\n",
+    "plt.show()\n",
+    "\n",
+    "print('Mean = ',temps_mn)\n",
+    "print('Median[data] = ', temps_md)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "\n",
+    "<h6> 1. Is the distribution of body temperatures normal?</h6>\n",
+    "<p>Observing the CDF plot suggests the sample data closely approximate a normal distribution.  Furthermore, the close alignment of mean and median suggest an approximately symmetrical distribution of data.  The combination of summary statistic data and CDF suggest the data can be treated as a normal distribution.\n",
+    "</p>\n",
+    "<h6> 2. Is the sample size large?  Are the observations independent?</h6>\n",
+    "<p>Given the approximation of a normal distribution, and a sample size n > 30, CLT is applicable.  Sample data is considered large enough and a reasonably distributed representation of the population.  Samples appear to be drawn randomly and provide no information to either previous or subsequent samples.  Samples are, therefore, considered independent. </p>\n",
+    "\n",
+    "<h6> 3. Is the true population mean really 98.6 degrees F?</h6>\n",
+    "<p>The mean of observations (98.25 degrees F) differ from the conventionally accepted 98.6 degrees F.  Based on summary statistic data, and the consideration of the sample as representative of the population, it is reasonable to suggest 98.6 degrees F is not the true mean.</p>\n",
+    "\n",
+    "<p>This can be tested by testing the null hypothesis: </p>\n",
+    "\n",
+    "$$H_0: \\mu = \\mu_0$$\n",
+    "\n",
+    "<p>The alternate hypothesis: \n",
+    "$$H_A: \\mu \\ne \\mu_0$$\n",
+    "\n",
+    "<p>Three methods will be applied: \n",
+    "<ul><b>Bootstrap</b> - this method applies resampling to simulate data collection.  Test statistics are measured to determine percentage of simulated tests that are at least as extreme as the data.  The test statistic that will be used is the empirical difference between the mean values.</ul>\n",
+    "\n",
+    "<ul><b>z-test</b> - this method is ideal given a normal distribution, sample size n > 30, and when the standard deviation ($\\theta$) of the population is known.  In this case, given the assumption that the sample size and distribution is n > 30 and considered normal, $\\theta_{sample}$ will be used.  It should be noted that treating $\\theta_{sample}$ as $\\theta_{population}$ could produce inaccurate results.</ul>\n",
+    "\n",
+    "<ul><b>t-test</b> - this method is generally used when the sample size is n < 30, or when $\\theta$ is known for the sample but not the population.  In this case, given $\\theta_{sample}$, this method is likely more appropriate for the hypothesis test.</ul>\n",
+    "\n",
+    "<p><b>NOTE</b>: Given a single set of data to compare to a mean (without data), all three methods will employ one sample tests. </p> \n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 6,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "p-value =  0.0\n"
+     ]
+    }
+   ],
+   "source": [
+    "# Preparing for bootsrap test.\n",
+    "bt_value = 98.6\n",
+    "bt_shifted = temps - np.mean(temps) + bt_value\n",
+    "\n",
+    "# Define functions for bootstrap test.\n",
+    "def diff_from_bt(data, bt_value=98.6):\n",
+    "    return np.mean(data) - bt_value\n",
+    "\n",
+    "def bootstrap_replicate_1d(data,func):\n",
+    "    \"\"\"Generate bootstrap replicate of 1D data\"\"\"\n",
+    "    bs_sample = np.random.choice(data, len(data))\n",
+    "    \n",
+    "    return func(bs_sample)\n",
+    "\n",
+    "def draw_bs_reps(data, func, size=1):\n",
+    "    \"\"\"Draw boostrap replicates\"\"\"\n",
+    "    \n",
+    "    bs_replicates = np.empty(size)\n",
+    "    \n",
+    "    for i in range(size):\n",
+    "        bs_replicates[i] = bootstrap_replicate_1d(data, func)\n",
+    "    \n",
+    "    return bs_replicates\n",
+    "\n",
+    "diffs = diff_from_bt(temps, bt_value)\n",
+    "bs_replicates = draw_bs_reps(bt_shifted, diff_from_bt, 10000)\n",
+    "\n",
+    "p = np.sum(bs_replicates <= diffs) / len(bs_replicates)\n",
+    "\n",
+    "print('p-value = ',p)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 7,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "(-5.4759252020785585, 2.1761575829356528e-08)\n",
+      "-5.45482329236 2.41063204156e-07\n"
+     ]
+    }
+   ],
+   "source": [
+    "# z-test and t-test\n",
+    "# Import library\n",
+    "import scipy.stats as st\n",
+    "\n",
+    "# Define function for 1 sample z-test.\n",
+    "def ztst_1samp(data, value=1):\n",
+    "    \"\"\"Performs a one sample z-test, returning z-score and p-value\"\"\"\n",
+    "    z = (np.mean(data) - value) / (np.std(data) / np.sqrt(len(data))) \n",
+    "    \n",
+    "    if np.mean(data) >= value:\n",
+    "        p = st.norm.cdf(-z)\n",
+    "    \n",
+    "    else:\n",
+    "        p = st.norm.cdf(z)\n",
+    "    \n",
+    "    return z,p\n",
+    "\n",
+    "z = ztst_1samp(temps,98.6)\n",
+    "print(z)\n",
+    "\n",
+    "t,p = st.ttest_1samp(temps, 98.6)\n",
+    "print(t,p)\n",
+    "\n"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "<p>Given a one sample test, and determining the t-test most appropriate, the confidence interval and margin of error will be calculated with the formula:   \n",
+    "$$CI = \\bar{x} \\pm t*_{n-1} \\left( \n",
+    "\\frac{s}{\\sqrt{n}}\\right),  {where}\\space\n",
+    "{t*_{n-1}}$$"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 8,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "-5.45482329236 2.41063204156e-07\n",
+      "(0.12555096480257902, (98.123679804428164, 98.374781734033334))\n",
+      "94.2652581451\n",
+      "[ 96.7225  99.4775]\n"
+     ]
+    },
+    {
+     "data": {
+      "text/plain": [
+       "0.73035777890503795"
+      ]
+     },
+     "execution_count": 8,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "def t_merci_1samp(ci_val, data):\n",
+    "    \n",
+    "    x = np.mean(data)\n",
+    "    s = np.std(data)\n",
+    "    top =  s\n",
+    "    bottom = np.sqrt(len(data))\n",
+    "    merr = top / bottom\n",
+    "    xmerr = merr * ci_val\n",
+    "    ci = ((x - xmerr, x + xmerr))\n",
+    "    \n",
+    "    \n",
+    "    return xmerr, ci\n",
+    "\n",
+    "t,p = st.ttest_1samp(temps, 98.6)\n",
+    "print(t,p)\n",
+    "\n",
+    "mer_ci = t_merci_1samp(1.96, temps)\n",
+    "\n",
+    "print(mer_ci)\n",
+    "print(np.mean(temps) + (np.std(temps))*t)\n",
+    "print(np.percentile(temps, [2.5,97.5]))\n",
+    "np.std(temps)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "<p>Under all three test methods, p-values are virtually zero and indicate rejection of the null hypothesis that the true mean body temperature is 98.6 degrees F. </p>\n",
+    "\n",
+    "<p>Given a one sample test, and determining the t-test most appropriate, the confidence interval and margin of error were calculated by: </p>\n",
+    "\n",
+    "$$CI = \\bar{x} \\pm t*_{n-1} \\left( \n",
+    "\\frac{s}{\\sqrt{n}}\\right),  {where}\\space\n",
+    "{t*_{n-1}}$$\n",
+    "\n",
+    "<p>Accounting for the margin of error, the mean body temperature can be considered, with 95% confidence, to be 98.1 - 98.4 degrees F, also rejecting the null hypothesis.</p>  "
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 9,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "image/png": "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\n",
+      "text/plain": [
+       "<matplotlib.figure.Figure at 0x115691470>"
+      ]
+     },
+     "metadata": {},
+     "output_type": "display_data"
+    },
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "10 sample mean:  98.11\n",
+      "10 sample st.dev:  0.476340214553\n",
+      "10 sample median:  98.05\n"
+     ]
+    },
+    {
+     "data": {
+      "text/plain": [
+       "array([ 97.9,  98.8,  98.6,  97. ,  98. ,  98.6,  98.1,  98. ,  98.1,  98. ])"
+      ]
+     },
+     "execution_count": 9,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "temps_10tot = np.random.choice(temps,10)\n",
+    "mn10 = np.mean(temps_10tot)\n",
+    "sd10 = np.std(temps_10tot)\n",
+    "\n",
+    "# Sample out a normal distribution of mean & standard deviation of data.\n",
+    "test_samp = np.random.normal(mn10, sd10, size=10000)\n",
+    "\n",
+    "# Assign normal distribution data to appropriate variables for plotting: x_test, y_test\n",
+    "x_test,y_test = ecdf(test_samp)\n",
+    "\n",
+    "# Assign body temperature data to appropriate variables for plotting: x, y\n",
+    "x,y = ecdf(temps_10tot)\n",
+    "\n",
+    "# Plot temperature CDF with overlay of normal distribution CDF.\n",
+    "_ = plt.plot(x_test, y_test)\n",
+    "_ = plt.plot(x, y, marker='.')\n",
+    "_ = plt.xlabel('Body temperature (F)')\n",
+    "_ = plt.ylabel('CDF')\n",
+    "\n",
+    "# Plot reference lines\n",
+    "plt.axvline(x=temps_mn, color='red', linewidth = 0.25)\n",
+    "plt.axhline(y=0.5, color='red', linewidth = 0.25)\n",
+    "\n",
+    "plt.margins(0.02)\n",
+    "plt.show()\n",
+    "\n",
+    "print('10 sample mean: ',mn10)\n",
+    "print('10 sample st.dev: ',sd10)\n",
+    "print('10 sample median: ', np.median(temps_10tot))\n",
+    "temps_10tot\n",
+    "\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 10,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "10 sample t-stat:  -3.08602959626   p-value:  0.0130126268502\n",
+      "10 sample z-stat:  -3.25296081696   p-value:  0.000571046223435\n",
+      "margin of error:  0.340428324321   mean conf.int:  (97.769571675679003, 98.450428324320995)\n"
+     ]
+    }
+   ],
+   "source": [
+    "t_10s, p_10s = st.ttest_1samp(temps_10tot, 98.6)\n",
+    "z_10s = ztst_1samp(temps_10tot, 98.6)\n",
+    "\n",
+    "mer_ci2 = t_merci_1samp(2.26, temps_10tot)\n",
+    "\n",
+    "print('10 sample t-stat: ',t_10s, '  p-value: ',p_10s)\n",
+    "print('10 sample z-stat: ',z_10s[0], '  p-value: ',z_10s[1])\n",
+    "print('margin of error: ',mer_ci2[0], '  mean conf.int: ', mer_ci2[1])"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "<h6><b>4. Draw a small sample size of 10 from the data and repeat both tests. </b></h6>\n",
+    "\n",
+    "$$H_0: \\mu = \\mu_0$$ \n",
+    "$$H_A: \\mu \\ne \\mu_0$$\n",
+    "\n",
+    "<p>The p-values of both tests provide that the null hypothesis should be rejected.  Furthermore, given the hypothesized mean falls outside the margin of error, evidence supports rejecting the null hypothesis. </p>\n",
+    "\n",
+    "<p>Points of note:\n",
+    "<ul>\n",
+    "<li>Observing the plot of the data demonstrates a poor fit to the CDF.  Applying CLT and having observed the closer fit to the CDF plot with a higher number of samples, it becomes obvious that the sample size is not large.  As this is a condition of CLT, the conclusions drawn from this sample set are suspect.</ul>\n",
+    "<ul>\n",
+    "<li>Summary statistics demonstrate a mean lower than the larger data set, however, the observing the close alignment between the mean and median suggests that, although the 10 samples do not fit a normal distribution, they approximate symmetry.  This may indicate difficulty applying CLT because the sample is small. </ul>\n",
+    "<ul>\n",
+    "<li>Given the lower number of samples the t-test is appropriate.  Additionally, the p-value associated with the t-test indicates a higher probability of finding observed, or more extreme, results of the null hypothesis.  As opposed to the z-statistic, the t-statistic appears less spread out.  This contrast with normal t and z distributions likely exists given the small sample size and abnormal distribution.  It further provides that the t-test would be the more appropriate test for this sampling.    "
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 11,
+   "metadata": {
+    "scrolled": true
+   },
+   "outputs": [
+    {
+     "data": {
+      "image/png": "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\neeaZZ3jqqac4dOgQ3/jGN2Id5tcycuRI1q9fD8Dq1auZMGEC48aN47PPPkPXdY4ePYqu62RmZsY4\n0s4L17ZYk1lAreTn5/Pf//3fPPfcc6SkpPDQQw9RXV3Nf/3XfxEMBunfv39CzpBpEq590LhOc6J/\newzXtq1bt/KDH/wAq9VKSkoKixYtinWY5yxc+1atWsVNN92EzWbj29/+dkJ/OQG4++67uffee/nj\nH//I4MGDufLKKzEajUyYMIHZs2ej6zr33XdfrMM8J+HaFmtSDloIIXoo6QISQogeShKAEEL0UJIA\nhBCih5IEIIQQPZQkACGE6KEkAYgut379esaOHcvMmTO55ppruPrqq3nxxRc79R7l5eVcfvnlHX7+\n3LlzOxtml9q6dSuPPvpoVN7b6XTy85//HKUU8+fP51vf+hYzZ84M/Tz++OO4XC7uuOMOgsFgVGIQ\n8UmuAxAxcd5557F48WKg8QA1ffp0LrnkEoYOHRqV/W3YsCEq7xspX375JZWVlVF57z//+c/ceOON\noTIE8+bN4/rrrz/jeRMnTuSVV17hlltuiUocIv5IAhAx11Skreny/pKSEh566CG8Xi8ZGRksWLCA\n/Px8du7cyf/7f/8PgOHDhwONyWPKlCmsWLECh8NBeXk5t956K++9917o/R988EEAbrjhBl577TVW\nr17NE088QSAQoH///vzud78jIyODyy+/nOnTp7NmzRpMJhO33347zz33HAcPHuTuu+9m2rRpzJ8/\nH6vVyrZt23C5XPz0pz/l2muvxeVysWDBAkpLSwkGg/z4xz9mxowZ/Otf/+KNN96gpqaGyZMnM2PG\nDH73u9/hdrupqqri1ltvZfr06TzxxBO43W6efvppsrOz2bBhQ+iitblz53LHHXcA8Oijj6LrOgUF\nBdx3331h99mc0+nk448/5te//vVZfw8zZszgxhtv5Oabbw4lC9HNdXn9UdHjrVu3ThUVFalrrrlG\nzZgxQ40ZM0bdfffdStd15fV61eTJk9WWLVuUUkq99957ofK/M2bMUJ999plSSqmnnnpKTZ48WSml\n1F133aVee+01pZRSTz75pHrmmWfO2GdhYaFSSqnKykp1zTXXqJqaGqWUUi+//LK65557lFJKTZ48\nWb3wwgtKKaXmz5+vbrrpJuX3+9X69evVzJkzlVJK3X333er73/++8vl86tixY2rixInqxIkT6tFH\nH1UvvviiUkqp+vp6NX36dHXo0CG1dOlSNXXqVOX3+5VSSj344INq7dq1SqnG8ttFRUVKKaWWLl2q\n7r777jNuK6XUd7/7XbVu3Tq1bt06NX78eFVXV6eUUm3us7lly5apefPmhe7ffffd6rLLLlPXXHNN\n6Ke+vj60/dprr1W7du06269QdBNyBiBionUX0I9+9CP+9re/MXnyZFJTU0Mlt6+++mruu+8+jhw5\nwokTJ7jkkksAuP7661m6dCnQWCTtySef5Dvf+Q7vvPNOu+MJW7Zs4dixY3zve98DQNd10tLSQtub\nyi3n5OTQp08fTCYTOTk5LWoIXX/99ZjNZvr27cu4ceMoLi5m7dq1eDyeUExut5vS0lKgsQZMU1XI\n+fPn8+mnn/LMM8+wd+/eTlfvHDRoUOhMqa19NtV3Ajhw4AB9+/Zt8R5tdQE1tfvAgQOhMyzRvUkC\nEDHncDi4+uqrWbt2LZdddtkZ25VS2O12VLOqJc3r+l9wwQWcOHGCjz76iP79+5Odnd3mvoLBIOPG\njeOvf/0r0Nj91LzSpNlsDt1uXsq3ueb71nUdk8mErus8+uijjBo1CoCTJ0+SlpbG22+/jc1mCz3/\nF7/4BampqUyePJlp06aFXQFK07QWbfX7/aHbzd+rrX22fq+22tFW25pXrRTdm/ymRcwFg0E2bNjA\nyJEjGTx4MDU1NWzduhWA9957j5ycHDIyMsjJyeGTTz4BaHHg1DSNa6+9lgcffLDNb7ZGo5FAIMD5\n559PSUkJ+/fvB+Avf/kLjzzySKfiff/991FKceTIEbZu3cr48eO5+OKLefnllwE4ceIE11xzDceO\nHTvjtWvWrGHevHlcccUVrF69OtT+pvgAMjIyKCsrQynF4cOH2bNnT9g4OrLP/Px8jhw50uG2HTly\nhLy8vA4/XyQ2OQMQMbF9+3ZmzpyJpmkEAgGGDRvGj3/8YywWC48//ji/+93vaGhoIC0tjccffxxo\nHAD9zW9+w5/+9CeKiopavN/06dN57rnnuOKKK8Lub8qUKcycOZN//etfLFy4kF/84hfouk52dnan\np196PB5mzZqFz+djwYIFZGRkcMcdd/DAAw8wY8YMgsEgv/71r8nLywuVEW/y85//nJtvvhmr1crw\n4cPJzc2lvLycMWPG8NRTT/HYY48xb948li5dylVXXcWgQYMYP3582Dja2mdzEydO5OGHH0bX9bN+\ns6+rq8PpdEr3Tw8i1UBFwtN1nZdffpn9+/fz29/+Nqr7mj9/PhdeeGGbZxrx6OGHH+biiy9m8uTJ\n7T7vxRdfxGQyyTTQHkS6gETCu+OOO3j99de5/fbbYx1KXGr6/2nvu57L5eLzzz9n9uzZXRiZiDU5\nAxBCiB5KzgCEEKKHkgQghBA9lCQAIYTooSQBCCFEDyUJQAgheqj/D2w48ycIeHwrAAAAAElFTkSu\nQmCC\n",
+      "text/plain": [
+       "<matplotlib.figure.Figure at 0x1156fdeb8>"
+      ]
+     },
+     "metadata": {},
+     "output_type": "display_data"
+    },
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "Mean :  98.2492307692     Margin of error:  0.125550964803\n",
+      "2SD :                      ( 96.6629642466 ,  99.8354972918 )\n",
+      "Percentiles (2.5 , 97.5) : ( 96.7225       ,  99.4775 )\n",
+      "Normal temperature range : ( 96.5969490352 ,  99.6030509648 )\n"
+     ]
+    }
+   ],
+   "source": [
+    "import pylab as p\n",
+    "\n",
+    "lower = np.percentile(temps, 2.5) - mer_ci[0]\n",
+    "upper = np.percentile(temps,97.5) + mer_ci[0]\n",
+    "sd2lw = temps_mn - temps_sd * 2\n",
+    "sd2hg = temps_mn + temps_sd * 2\n",
+    "sd2lw_adj = temps_mn - mer_ci[0] - temps_sd * 2\n",
+    "sd2hg_adj = temps_mn + mer_ci[0] + temps_sd * 2\n",
+    "\n",
+    "# Sample out a normal distribution of mean & standard deviation of data.\n",
+    "test_samp = np.random.normal(temps_mn, temps_sd, size=10000)\n",
+    "\n",
+    "# Assign normal distribution data to appropriate variables for plotting: x_test, y_test\n",
+    "x_test,y_test = ecdf(test_samp)\n",
+    "\n",
+    "# Assign body temperature data to appropriate variables for plotting: x, y\n",
+    "x,y = ecdf(temps)\n",
+    "\n",
+    "# Plot temperature CDF with overlay of normal distribution CDF.\n",
+    "_ = plt.plot(x_test, y_test, color='black', alpha = 0.5)\n",
+    "_ = plt.plot(x, y, marker='.', linestyle='none', color='purple')\n",
+    "_ = plt.xlabel('Body temperature (F)')\n",
+    "_ = plt.ylabel('CDF')\n",
+    "\n",
+    "# Plot reference lines\n",
+    "plt.axhline(y=0.025, color='maroon', linewidth = 0.5)\n",
+    "plt.axhline(y=0.975, color='maroon', linewidth = 0.5)\n",
+    "plt.axvline(x=sd2lw, color='cyan', linewidth = 0.5)\n",
+    "plt.axvline(x=sd2hg, color='cyan', linewidth = 0.5)\n",
+    "plt.axvline(x=sd2lw_adj, color='magenta', linewidth = 0.5)\n",
+    "plt.axvline(x=sd2hg_adj, color='magenta', linewidth = 0.5)\n",
+    "\n",
+    "plt.fill_between(x_test[:160],y_test[:160],color='red', alpha=0.25)\n",
+    "plt.fill_between(x_test[161:9876],y_test[161:9876], color='green', alpha=0.25)\n",
+    "plt.fill_between(x_test[9877:],y_test[9877:], color='red', alpha=0.25)\n",
+    "\n",
+    "plt.margins(0.02)\n",
+    "plt.show()\n",
+    "\n",
+    "print('Mean : ',temps_mn, '    Margin of error: ', mer_ci[0])\n",
+    "print('2SD :                      (',temps_mn - mer_ci[0] - temps_sd * 2, ', ', temps_mn + mer_ci[0] + temps_sd * 2,')')\n",
+    "print('Percentiles (2.5 , 97.5) : (', np.percentile(temps, 2.5),'      , ', np.percentile(temps,97.5),')')\n",
+    "print('Normal temperature range : (',lower,', ',upper,')')\n"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "<h6><b> 5. At what temperature should we consider someone's temperature to be \"abnormal\"?</b></h6>\n",
+    "\n",
+    "<p>Observing the CDF above, horizontal maroon lines indicate percentile divisions at 2.5% and 97.5%.  In short, 95% of the temperature data (purple) are plotted between the maroon horizontal lines.  The percentiles calculated from the data indicate that 95% of the temperature observations were 96.7-99.5 degrees F.  Adjusted for margin of error, the 2SD calculations indicate closely aligned values.</p>\n",
+    "\n",
+    "<p> Theoretical 2.5th and 97.5th percentiles, shaded in red closely align with the lines representing the 2SD plots of the data.  Additionally, 95% of theoretical values, in the green shaded area, also demonstrate the range of expected values for body temperature.</p>\n",
+    "\n",
+    "<p> Given both theoretical and actual data and adjusting for a margin of error, with 95% confidence, the temperature range 96.6-99.6 degrees F would be considered normal body temperature.  Temperatures outside this range may be considered abnormal, but possibly naturally occuring given the data.</p>"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 12,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "Mean temp.  male:  98.1046153846    female:  98.3938461538\n",
+      "Std. dev.   male:  0.693359884183   female:  0.737746448643\n",
+      "Median      male:  98.1             female:  98.4\n",
+      "Sample size male:  65               female:  65\n"
+     ]
+    }
+   ],
+   "source": [
+    "mtemps_mn = np.mean(mtemps)\n",
+    "mtemps_sd = np.std(mtemps)\n",
+    "mtemps_md = np.median(mtemps)\n",
+    "\n",
+    "ftemps_mn = np.mean(ftemps)\n",
+    "ftemps_sd = np.std(ftemps)\n",
+    "ftemps_md = np.median(ftemps)\n",
+    "\n",
+    "print('Mean temp.  male: ',mtemps_mn,'   female: ',ftemps_mn)\n",
+    "print('Std. dev.   male: ',mtemps_sd,'  female: ',ftemps_sd)\n",
+    "print('Median      male: ',mtemps_md,'            female: ',ftemps_md)\n",
+    "print('Sample size male: ',len(mtemps),'              female: ',len(ftemps))"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "<h6><b>6. Is there a significant difference between males and females in normal temperature?</b></h6>\n",
+    "\n",
+    "<p>Observing summary statistics for both males and females, it appears that mean and median for both sets closely align.  Additionally, CLT applies with the sample sizes (n > 30).  Noting similarities to the larger data set from which these sets were derived, summary data of both sets suggests approximation of a normal distributions.</p>\n",
+    "\n",
+    "<p>That said, the appropriate test would be a two sample z-test.</p>\n",
+    "\n",
+    "$$z = \\frac{\\left( \\mu_m - \\mu_f \\right) - \\Delta_{H_0}}{\\sqrt{\\left( \\frac{{\\theta_m}^2}{n_m} + \\frac{{\\theta_f}^2}{n_f}\\right)}}$$\n",
+    "\n",
+    "<p>Additionally, given two data sets, a permutation test may also be appropriate.  Both will be used to test the hypothesis:</p>\n",
+    "\n",
+    "$$H_0: \\mu_m = \\mu_f$$ \n",
+    "$$H_A: \\mu_m \\ne \\mu_f$$\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 13,
+   "metadata": {
+    "collapsed": true
+   },
+   "outputs": [],
+   "source": [
+    "def ztst_2samp(data1, data2, h_0):\n",
+    "    \"\"\"Performs a one sample z-test, returning z-score and p-value\"\"\"\n",
+    "    \n",
+    "    d1m, d1s, d1n = np.mean(data1), np.std(data1)**2, len(data1)\n",
+    "    d2m, d2s, d2n = np.mean(data2), np.std(data2)**2, len(data2)\n",
+    "    \n",
+    "    top = d1m - d2m - h_0 \n",
+    "    bottom = d1s**2 / d1n + d2s**2 / d2n\n",
+    "    \n",
+    "    z = top / np.sqrt(bottom)\n",
+    "    \n",
+    "    if d1m >= d2m:\n",
+    "        p = st.norm.cdf(-z)\n",
+    "    \n",
+    "    else:\n",
+    "        p = st.norm.cdf(z)\n",
+    "    \n",
+    "    return z,p"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 14,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "p-value =  0.000661163345897\n"
+     ]
+    }
+   ],
+   "source": [
+    "#Perform z test and print p-value\n",
+    "z = ztst_2samp(mtemps, ftemps, 0)\n",
+    "\n",
+    "print('p-value = ',z[1])"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 15,
+   "metadata": {
+    "collapsed": true
+   },
+   "outputs": [],
+   "source": [
+    "def z_merci(z_conf_int, data1, data2):\n",
+    "    full = np.concatenate((data1, data2))\n",
+    "    prop = len(data1)/ len(full)\n",
+    "    propi = 1 - prop\n",
+    "    prop2 = len(data2) / len(full)\n",
+    "    cal = prop * propi / len(full)\n",
+    "     \n",
+    "    m_err = z_conf_int * np.sqrt(cal)\n",
+    "    c_int = (np.mean(data1) - np.mean(data2)) + np.array([-1,1]) * m_err\n",
+    "    \n",
+    "    if prop + prop2 == 1 and propi * len(data1) >= 10 and prop * len(data1) >=10:\n",
+    "        x = 'check'\n",
+    "    else:\n",
+    "        x = 'verify'\n",
+    "    \n",
+    "    return m_err, c_int, x\n",
+    "        "
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 16,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "margin of error:  0.0859516858921\n",
+      "confidence interval : ( 97.7294329295 ,  98.307894468 )\n",
+      "z-score : -3.21108966273\n"
+     ]
+    },
+    {
+     "data": {
+      "text/plain": [
+       "'check'"
+      ]
+     },
+     "execution_count": 16,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "merr = z_merci(1.96, mtemps, ftemps)\n",
+    "\n",
+    "print('margin of error: ',merr[0])\n",
+    "print('confidence interval : (',mtemps_mn + merr[1][0],', ',mtemps_mn - merr[1][1],')')\n",
+    "print('z-score :',z[0])\n",
+    "merr[2]"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 17,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "False"
+      ]
+     },
+     "execution_count": 17,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "#Boolean test to determine if means are equal with margin of error\n",
+    "ftemps_mn == mtemps_mn - merr[1][1]"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 18,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "False"
+      ]
+     },
+     "execution_count": 18,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "#Boolean test to determine if the mean for men is greater than women's with margin of error\n",
+    "ftemps_mn < mtemps_mn - merr[1][1]"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 19,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "True"
+      ]
+     },
+     "execution_count": 19,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "#Boolean test to determine if the mean for women is greater than men's with margin of error\n",
+    "ftemps_mn > mtemps_mn - merr[1][1]"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "<p>Given a p-value very close to zero, evidence is given to reject the null hypothesis.  Further evaluation of the margin of error and confidence intervals demonstrate, with 95% confidence, male body temperature nearing the mean of the female body temperature.  A closer look indicates that the mean female body temperature falls outside the margin of error and provides further evidence to reject the null hypothesis.</p>\n",
+    "\n",
+    "<p>With two data sets, a permutation test may be useful to test the hypothesis.</p>"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 20,
+   "metadata": {
+    "collapsed": true
+   },
+   "outputs": [],
+   "source": [
+    "def diff_of_means(data_1, data_2):\n",
+    "    \"\"\"Difference in means of two arrays\"\"\"\n",
+    "    \n",
+    "    diff = np.mean(data_1) - np.mean(data_2)\n",
+    "    \n",
+    "    return diff\n",
+    "\n",
+    "def permutation_sample(data1, data2):\n",
+    "    \"\"\"Generate a permutation sample from two data sets\"\"\"\n",
+    "    \n",
+    "    data = np.concatenate((data1, data2))\n",
+    "    permuted_data = np.random.permutation(data)\n",
+    "    perm_sample_1 = permuted_data[:len(data1)]\n",
+    "    perm_sample_2 = permuted_data[len(data1):]\n",
+    "    \n",
+    "    return perm_sample_1, perm_sample_2\n",
+    "\n",
+    "def draw_perm_reps(data_1, data_2, func, size=1):\n",
+    "    \"\"\"Generate multipl permutation replicates\"\"\"\n",
+    "    \n",
+    "    perm_replicates = np.empty(size)\n",
+    "    \n",
+    "    for i in range(size):\n",
+    "        perm_sample_1, perm_sample_2 = permutation_sample(data_1, data_2)\n",
+    "        perm_replicates[i] = func(perm_sample_1, perm_sample_2)\n",
+    "        \n",
+    "    return perm_replicates\n",
+    "\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 21,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "p-value:  0.0147\n",
+      "empirical difference of means:  -0.289230769231\n",
+      "95% confidence interval:  [-0.25230769  0.25238462]\n"
+     ]
+    }
+   ],
+   "source": [
+    "# Calculate empirical difference of means\n",
+    "empirical_diff_means = diff_of_means(mtemps, ftemps)\n",
+    "\n",
+    "# Draw 10000 permutation replicates\n",
+    "perm_replicates = draw_perm_reps(mtemps, ftemps, diff_of_means, size=10000)\n",
+    "\n",
+    "# Calculate & print p-value\n",
+    "p = np.sum(perm_replicates <= empirical_diff_means) / len(perm_replicates)\n",
+    "\n",
+    "\n",
+    "print('p-value: ', p)\n",
+    "print('empirical difference of means: ',empirical_diff_means)\n",
+    "print('95% confidence interval: ', np.percentile(perm_replicates, [2.5, 97.5]))\n"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Although the higher p-value demonstrates that, in some instances, finding observations at least as extreme as the data was possible in the simulation, it fails to provide enough evidence to support the null hypothesis.  Given the observed difference of mean temperature falls outside the 95% confidence interval, it is reasonable to reject the null hypothesis in favor of concluding that the true mean male body temperature does not equal the true mean female body temperature."
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "<h3><b>Summary</b></h3>\n",
+    "\n",
+    "<p>In this exercise, observations from Carl Wunderlich's study on normal body temperature were the subject of exploration.  Statistical concepts of hypothesis testing, confidence intervals, and statistical significance were utilized in the analysis of data in order to answer questions concerning Wunderlich's conclusions.  One question of note:  Is the true population mean really 98.6 degrees F? </p>\n",
+    "\n",
+    "<p>Exploration began with determining if the data fit a normal distribution.  Summarizing Central Limit Theorem (CLT), as the number of observations gets larger, the distribution of data becomes more normally distributed.  This is important because, if the sample data (i.e. mean, standard deviation, etc) is normally distributed, it can be deemed representative of the population.  Consequently, conclusions drawn from normally distributed data are likely to apply to the population.</p>\n",
+    "\n",
+    "<p>If the body temperature data is plotted over a normal distribution, it should align if it is normally distributed.  For this to work, the normal distribution key, should have the same parameters (mean, standard deviation, etc) of the data.  To get this key, 10,000 samples were simulated and plotted with the actual sample data.  While not perfect, the alignment was such that the data could be treated as a normal distribution.  Since one person's body temperature generally doesn't determine anothers, each observation could be assumed independent.  Given the disbribution, the sample size could be considered large, meeting conditions of CLT.</p>\n",
+    "\n",
+    "<p>The sample mean, however, was 98.25 degrees F; quite different from Wunderlich's value (98.6$^{\\circ}$F).  Perhaps it's because the true mean encompasses a much larger set of data.  However, if the distribution is normal, the mean calculated should be representative.  This difference can be tested through hypothesis testing methods.  Stating a clear hypothesis is important.  For these tests, the hypothesis is that the true mean is not 98.6 degrees F.  This is testable through a null hypothesis:  The true mean is 98.6 degrees F.</p>\n",
+    "\n",
+    "<p>What the null hypothesis is saying is that if more observations were collected, the mean would eventually become reach Wunderlich's value.  Since two samples cannot be tested against each other, a one sample test is used.  The test methods used were Bootstrap, t-test, and z-test.  Each test involves analyzing the distribution and calculating a p-value that represents the probability that simulated findings would observe at least the extreme observed in the data.</p>\n",
+    "\n",
+    "<p> Generally, the most appropriate testing method would be used rather than three tests.  In this case, it could be argued that the most appropriate test method is the t-test rather than the z-test.  This is because the population standard deviation is not known.  The argument can be made that if the data are representative, then the standard deviation could be considered representative as well.  That would allow the z-test to be utilized.  Given the larger sample size, the z-test would be preferable over the t-test.  This exercise, however, is about exploration of statistical methods and their findings.  All three testing methods produced findings that suggested rejection of the null hypothesis.  In other words, based on the testing the true mean body temperature is NOT 98.6 degrees F.</p>\n",
+    "\n",
+    "\n",
+    "<p>Further exploring testing methods, a random sample of 10 observations was taken from the body temperature data.  In this case, given the small smaple size, applying the z-test is inappropriate.  The t-test, on the other hand, is better suited for smaller sample sizes.  The t-test returned a higher probability of finding observations as extreme as the observed data than the z-test, but neither p-value supported the null hypothesis.  Testing suggested, again, that the true mean body temperature is not 98.6 degrees F.  An interesting observation about the t-score and z-score:  the t-score suggested a distribution less spread out than the z-score.  Under normal distribution circumstances (with more than 30 values), the z-distribution is less spread out than the t-distribution.  This is likely demonstrative of the reason the z-test is less revealing for small samples.</p>\n",
+    "\n",
+    "<p>Further exploration of the data revealed a rationale for determining what would be considered \"normal\" body temperature.  In the plot of theoretical and actual data, it is revealed that 95% of all the data (both theoretical and actual) demonstrated close alignment with a range from 96.6-99.6 degrees F.  Given a normal distribution, approximately 95% of data is found within 2 standard devations from the mean.  That said, computing 2 standard deviations from the mean also showed alignment with the 96.6-99.6 degree F range. </p>\n",
+    "\n",
+    "<p>Given the data includes male and female body temperatures, further exploration into the possibility of significant differences in body temperature.  The data suggested that men and women showed different body temperature.  To determine if this difference was significant the null hypothesis that the true means were the same was tested. </p>\n",
+    "\n",
+    "<p>Given two data sets, a two sample test was possible.  Two test methods were applied.  First, the two sample z-test was performed.  The resulting p-value suggested the absence of significant evidence to support the null hypothesis.  When adjusted for margin of error, the high range of male body temperature looked to be fairly close to the mean female body temperature value.  Upon closer inspection, the mean female body temperature value was not within the margin of error, providing more evidence to reject the null hypothesis.</p>\n",
+    "\n",
+    "<p>The second test method used was a permutation test.  In this case, assumption of the null hypothesis suggested if values were permutated together, the differences between the means should also remain the same.  The p-value returned a low probability of observing values at least as extreme as the null hypothesis.  With the empirical difference of means falling outside the 95% confidence interval of simulated difference of means, the null hypothesis is not supported.</p>\n",
+    "\n",
+    "<p>After exploring the data and testing methods, it can be reasonably concluded that the true mean body temperature is not the conventionally accpeted 98.6 degrees F.  Given the ability to subdivde the population even more (i.e. male, female) and find significant differences, should body temperature undergo further analysis to determine if separate scales are necessary to account for these differences?  It is possible to put this question to the test.  For now, however, suffice it to say that the male and female mean body temperatures fall within the 96.6-99.6 degrees F range; suggesting it is reasonable to continue sharing the scale.</p>"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "collapsed": true
+   },
+   "outputs": [],
+   "source": []
+  }
+ ],
+ "metadata": {
+  "kernelspec": {
+   "display_name": "Python 3",
+   "language": "python",
+   "name": "python3"
+  },
+  "language_info": {
+   "codemirror_mode": {
+    "name": "ipython",
+    "version": 3
+   },
+   "file_extension": ".py",
+   "mimetype": "text/x-python",
+   "name": "python",
+   "nbconvert_exporter": "python",
+   "pygments_lexer": "ipython3",
+   "version": "3.6.3"
+  }
+ },
+ "nbformat": 4,
+ "nbformat_minor": 1
+}
